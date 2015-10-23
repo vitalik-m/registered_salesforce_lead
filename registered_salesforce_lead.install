@@ -1,0 +1,34 @@
+<?php
+
+/**
+ * @file
+ * Install, uninstall, and update functions for the module.
+ * 
+ * Drupal 7 Build 
+ */
+
+/**
+ * Implements hook_install().
+ */
+function registered_salesforce_lead_install() {
+  /* Set variables */
+  variable_set('registered_salesforce_lead_organization', '');
+  variable_set('registered_salesforce_lead_source', '');
+  variable_set('registered_salesforce_lead_trigger', '');
+  variable_set('registered_salesforce_lead_url', 'https://www.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8');
+  /* Log activity */
+  watchdog('registered_salesforce_lead', "Created variables", $variables = array(), WATCHDOG_NOTICE);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function registered_salesforce_lead_uninstall() {
+  /* Delete variables */
+  variable_del('registered_salesforce_lead_organization');
+  variable_del('registered_salesforce_lead_source');
+  variable_del('registered_salesforce_lead_trigger');
+  variable_del('registered_salesforce_lead_url');
+  /* Log activity */
+  watchdog('registered_salesforce_lead', "Deleted variables", $variables = array(), WATCHDOG_NOTICE);
+}
