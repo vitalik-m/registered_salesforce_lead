@@ -1,0 +1,174 @@
+<?php
+
+/**
+ * @file
+ * Drupal 7 Build
+ */
+
+/**
+ * @file
+ * A module file
+ */
+
+/**
+ * Define GLOBALS.
+ */
+define('SALESFORCE_ORGANIZATION', variable_get('registered_salesforce_lead_organization', ''));
+define('SALESFORCE_SOURCE', variable_get('registered_salesforce_lead_source', ''));
+define('SALESFORCE_URL', variable_get('registered_salesforce_lead_url', ''));
+
+/**
+ * Implementation of hook_permission().
+ */
+function registered_salesforce_lead_permission() {
+  return array(
+    'access registered_salesforce_lead' => array(
+      'title' => t('Access Registered Salesforce Lead'),
+      'description' => t('Access Registered Salesforce Lead'),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function registered_salesforce_lead_menu() {
+  $items = array();
+  $items['admin/config/people/registered_salesforce_lead'] = array(
+    'title' => 'Registered Salesforce Lead',
+	'description' => 'Configure the submission of the users as leads to the Salesforce',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('registered_salesforce_lead_overview'),
+    'access arguments' => array('access registered_salesforce_lead'),
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => 1,
+  );
+  return $items;
+}
+
+/**
+ * Module Overview
+ */
+function registered_salesforce_lead_overview() {
+  $form = array();
+
+  $form['registered_salesforce_lead'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Registered Salesforce Lead Configurations'),
+    '#weight' => 1,
+  );
+
+  $form['registered_salesforce_lead']['organization'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Organization ID'),
+    '#description' => t('Here is where the Organization ID can be found.'),
+    '#default_value' => SALESFORCE_ORGANIZATION,
+    '#required' => !SALESFORCE_ORGANIZATION,
+    '#weight' => 2,
+  );
+
+  $form['registered_salesforce_lead']['organization_id_help'] = array(
+    '#markup' => '	<p>Improved Setup User Interface enabled</p>
+					<ol><li><p>From the top-right screen, select <strong>Setup | Company Profile | Company Information</strong>.</p></li><li><p>In the "Organization Detail" section, look for <strong>"Salesforce.com Organization ID"</strong> field starting with 00Dxxx.</p></li></ol>
+					<p>Improved Setup User Interface disabled</p>
+					<ol><li><p>From the top-right screen, select <strong>&lt;YourName&gt; | Setup | Company Profile | Company Information</strong>.</p></li><li><p>In the "Organization Detail" section, look for <strong>"Salesforce.com Organization ID"</strong> field starting with 00Dxxx.</p></li></ol>
+					<p>Additional info on the Organization ID can be found <a href="https://help.salesforce.com/HTViewSolution?id=000006019&language=en_US">here</a></p>',
+    '#weight' => 3,
+  );
+
+  $form['registered_salesforce_lead']['source'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Lead Source'),
+    '#description' => t('If you have multiple lead data sources, it may be helpful to deferentiate between the sources'),
+    '#default_value' => SALESFORCE_SOURCE,
+    '#weight' => 5,
+  );
+
+  $form['registered_salesforce_lead']['url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Lead URL'),
+    '#description' => t('The URL where the leads are sent. Theoretically it shouldn\'t change, however it may be altered at some time in the future'),
+    '#default_value' => SALESFORCE_URL,
+    '#weight' => 6,
+  );
+
+  $form['registered_salesforce_lead']['trigger'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Auto trigger an email'),
+    '#description' => t('Salesforce lead submission can trigger an automatic (thank you or other) email to the lead upon submision. More information on setting up a trigger can be found <a href="https://help.salesforce.com/apex/HTViewHelpDoc?id=creating_auto-response_rules.htm&language=en">here</a>'),
+	'#default_value' => variable_get('registered_salesforce_lead_trigger', ''),
+    '#weight' => 7,
+  );
+
+  $form['registered_salesforce_lead']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save Configurations'),
+    '#weight' => 8,
+  );
+
+  /* Output the form */
+  return $form;
+}
+
+/**
+ * Module Overview - Submit
+ */
+function registered_salesforce_lead_overview_submit($form, &$form_state) {
+  if (SALESFORCE_ORGANIZATION != $form_state['values']['organization']) {
+    variable_set('registered_salesforce_lead_organization', $form_state['values']['organization']);
+    /* Log activity */
+    watchdog('registered_salesforce_lead', "Added/Changed " . $form_state['values']['organization'] . " as a value for Salesforce organization", $variables = array(), WATCHDOG_NOTICE);
+  }
+  if (SALESFORCE_SOURCE != $form_state['values']['source']) {
+    variable_set('registered_salesforce_lead_source', $form_state['values']['source']);
+    /* Log activity */
+    watchdog('registered_salesforce_lead', "Added/Changed " . $form_state['values']['source'] . " as a value for lead source", $variables = array(), WATCHDOG_NOTICE);
+  }
+  if (variable_get('registered_salesforce_lead_url', '') != $form_state['values']['url']) {
+    variable_set('registered_salesforce_lead_url', $form_state['values']['url']);
+    /* Log activity */
+    watchdog('registered_salesforce_lead', "Added/Changed " . $form_state['values']['url'] . " as a value for lead url", $variables = array(), WATCHDOG_NOTICE);
+  }
+  if (variable_get('registered_salesforce_lead_trigger', '') != $form_state['values']['trigger']) {
+    variable_set('registered_salesforce_lead_trigger', $form_state['values']['trigger']);
+    /* Log activity */
+    watchdog('registered_salesforce_lead', "Added/Changed " . $form_state['values']['trigger'] . " as a value for the email trigger", $variables = array(), WATCHDOG_NOTICE);
+  }
+}
+
+/**
+ * Implements hook_user_insert
+ */
+function registered_salesforce_lead_user_insert(&$edit, $account, $category) {
+  variable_get('registered_salesforce_lead_trigger', '') == '1' ? $trigger = 'true' : $trigger = 'false';
+  
+  global $user;
+
+  if (!$user->uid) {
+    watchdog('registered_salesforce_lead','created an account');
+    watchdog('registered_salesforce_lead','created an account username - ' . $account->name . ' - ');
+    watchdog('registered_salesforce_lead','created an account email - ' . $account->mail . ' - ');
+    $curl = curl_init();
+
+    $user_data = array(
+								'oid' => SALESFORCE_ORGANIZATION,
+						 //'first_name' => $account->field_first_name['und'][0]['value'],
+						  //'last_name' => $account->field_last_name['und'][0]['value'],
+		   'triggerAutoResponseEmail' => $trigger,
+						'lead_source' => SALESFORCE_SOURCE,
+							  'email' => $account->mail
+    );
+
+    $data_string = http_build_query($user_data, '', '&');
+
+    curl_setopt($curl, CURLOPT_URL, SALESFORCE_URL);
+    curl_setopt($curl, CURLOPT_POST, 1);
+    curl_setopt($curl, CURLOPT_POSTFIELDS, $data_string);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($curl, CURLOPT_HEADER, 1);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE);
+    curl_setopt($curl, CURLOPT_USERAGENT, "User Lead Generator");
+    $response = curl_exec($curl);
+  }
+}
