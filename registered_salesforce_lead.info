@@ -1,0 +1,16 @@
+name = Drupal Registered Salesforce Lead
+description = A module to demonstrate the interaction of the Drupal registration process and the web-to-lead Salesforce form
+package = Salesforce Addon Project
+core = 7.x
+
+; Drupal 7 Build
+
+; The installation file is not needed right now, it may come in handy at a later day
+files[] = registered_salesforce_lead.install
+
+; The module file will handle the the submission
+files[] = registered_salesforce_lead.module
+
+version = "7.x-0.1-alpha1"
+core = "7.x"
+project = "registered_salesforce_lead"
