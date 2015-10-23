@@ -11,6 +11,6 @@ files[] = registered_salesforce_lead.install
 ; The module file will handle the the submission
 files[] = registered_salesforce_lead.module
 
-version = "7.x-0.1-alpha1"
+version = "7.x-0.1-dev"
 core = "7.x"
 project = "registered_salesforce_lead"
